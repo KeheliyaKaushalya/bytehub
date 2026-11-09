@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Register - ByteHub</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+    <link rel="stylesheet" type="text/css" href="css/style.css">
+</head>
+<body>
+    <!--Header section-->
+    <header class="header">
+        <a href="index.html" class="logo"><i class="fa fa-desktop" aria-hidden="true"></i>ByteHub</a>
+
+        <nav class="navbar">
+            <a href="index.html">Home</a>
+            <a href="products.html">Products</a>
+            <a href="about.html">About</a>
+            <a href="contact.html">Contact</a>
+        </nav>
+
+        <div class="icons">
+            <div class="fa fa-bars" id="menu-btn"></div>
+            <div class="fa fa-shopping-cart" id="cart-btn"></div>
+            <div class="fa fa-user" id="login-btn"></div>
+        </div>
+
+        <div class="shopping-cart" id="cart-dropdown">
+            <div id="cart-items"></div>
+            <div class="total" id="cart-total">Total: Rs.0/-</div>
+            <a href="cart.html" class="btn">View Cart</a>
+        </div>
+
+        <div class="login-dropdown" id="login-dropdown">
+            <div id="auth-guest">
+                <h3>Login Now</h3>
+                <form id="login-form">
+                    <input type="email" id="login-email" placeholder="Enter your email" class="box" required>
+                    <input type="password" id="login-password" placeholder="Enter your password" class="box" required>
+                    <p>Don't have an account? <a href="register.html">Register Now!</a></p>
+                    <input type="submit" value="Login Now" class="btn">
+                </form>
+            </div>
+            <div id="auth-user" style="display: none;">
+                <h3>Welcome, <span id="user-name">User</span></h3>
+                <a href="dashboard.html" class="btn">My Account</a>
+                <button id="logout-btn" class="btn">Logout</button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Registration Form -->
+    <section style="padding-top: 15rem; padding-bottom: 5rem;">
+        <div class="form-container">
+            <h2>Create Your Account</h2>
+            <form id="registration-form">
+                <div class="form-group">
+                    <label for="reg-name">Full Name *</label>
+                    <input type="text" id="reg-name" placeholder="Enter your full name" required minlength="2">
+                    <p class="error" id="name-error"></p>
+                </div>
+                <div class="form-group">
+                    <label for="reg-email">Email Address *</label>
+                    <input type="email" id="reg-email" placeholder="Enter your email" required>
+                    <p class="error" id="email-error"></p>
+                </div>
+                <div class="form-group">
+                    <label for="reg-password">Password *</label>
+                    <input type="password" id="reg-password" placeholder="Enter password (min 6 characters)" required minlength="6">
+                    <p class="error" id="password-error"></p>
+                </div>
+                <div class="form-group">
+                    <label for="reg-confirm-password">Confirm Password *</label>
+                    <input type="password" id="reg-confirm-password" placeholder="Confirm your password" required>
+                    <p class="error" id="confirm-error"></p>
+                </div>
+                <div class="form-group">
+                    <label for="reg-phone">Phone Number</label>
+                    <input type="tel" id="reg-phone" placeholder="Enter your phone number">
+                </div>
+                <div class="form-group">
+                    <label for="reg-address">Address</label>
+                    <textarea id="reg-address" placeholder="Enter your address" rows="3"></textarea>
+                </div>
+                <button type="submit" class="btn btn-primary" style="width: 100%;">Register Now</button>
+            </form>
+            <p style="text-align: center; margin-top: 2rem; font-size: 1.5rem;">
+                Already have an account? <a href="index.html" style="color: var(--green);">Login Here</a>
+            </p>
+        </div>
+    </section>
+
+    <!--Footer Section-->
+    <section class="Footer">
+        <div class="box-container">
+            <div class="box">
+                <h3>ByteHub</h3>
+                <p>Your one-stop destination for high-performance computers, laptops, and accessories.</p>
+            </div>
+            <div class="box">
+                <h3>Quick Links</h3>
+                <a href="index.html"><i class="fa fa-arrow-right"></i> Home</a>
+                <a href="products.html"><i class="fa fa-arrow-right"></i> Products</a>
+                <a href="about.html"><i class="fa fa-arrow-right"></i> About Us</a>
+                <a href="contact.html"><i class="fa fa-arrow-right"></i> Contact</a>
+            </div>
+            <div class="box">
+                <h3>Customer Service</h3>
+                <a href="faq.html"><i class="fa fa-arrow-right"></i> FAQ</a>
+                <a href="privacy.html"><i class="fa fa-arrow-right"></i> Privacy Policy</a>
+                <a href="terms.html"><i class="fa fa-arrow-right"></i> Terms & Conditions</a>
+            </div>
+            <div class="box">
+                <h3>Contact Info</h3>
+                <a href="#"><i class="fa fa-phone"></i> +94 11 234 5678</a>
+                <a href="#"><i class="fa fa-envelope"></i> info@bytehub.lk</a>
+            </div>
+        </div>
+        <div class="credit">
+            <p>&copy; 2024 ByteHub. All Rights Reserved.</p>
+        </div>
+    </section>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="js/script.js"></script>
+</body>
+</html>

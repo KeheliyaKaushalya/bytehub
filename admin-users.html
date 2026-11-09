@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Manage Users - ByteHub Admin</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+    <link rel="stylesheet" type="text/css" href="css/style.css">
+</head>
+<body>
+    <!--Header section-->
+    <header class="header">
+        <a href="index.html" class="logo"><i class="fa fa-desktop" aria-hidden="true"></i>ByteHub Admin</a>
+
+        <nav class="navbar">
+            <a href="index.html">View Site</a>
+            <a href="admin.html">Dashboard</a>
+        </nav>
+
+        <div class="icons">
+            <div class="fa fa-bars" id="menu-btn"></div>
+            <div class="fa fa-sign-out" id="admin-logout-btn"></div>
+        </div>
+    </header>
+
+    <!-- Admin Dashboard -->
+    <div class="dashboard-grid">
+        <div class="dashboard-sidebar">
+            <h3>Admin Panel</h3>
+            <a href="admin.html"><i class="fa fa-dashboard"></i> Dashboard</a>
+            <a href="admin-products.html"><i class="fa fa-shopping-bag"></i> Products</a>
+            <a href="admin-users.html" class="active"><i class="fa fa-users"></i> Users</a>
+            <a href="admin-orders.html"><i class="fa fa-truck"></i> Orders</a>
+            <a href="admin-faqs.html"><i class="fa fa-question-circle"></i> FAQs</a>
+        </div>
+
+        <div class="dashboard-content">
+            <h2>User Management</h2>
+            <div id="admin-users-table">
+                <div class="loading">
+                    <div class="spinner"></div>
+                    <p>Loading users...</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <section class="Footer">
+        <div class="credit"><p>&copy; 2024 ByteHub Admin. All Rights Reserved.</p></div>
+    </section>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="js/script.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', async () => {
+            const { data: { session } } = await supabase.auth.getSession();
+            if (session) {
+                const { data: profile } = await supabase.from('user_profiles').select('*').eq('id', session.user.id).single();
+                if (!profile?.is_admin) {
+                    window.location.href = 'index.html';
+                    return;
+                }
+                loadUsers();
+            } else {
+                window.location.href = 'index.html';
+            }
+
+            document.getElementById('admin-logout-btn').addEventListener('click', async () => {
+                await supabase.auth.signOut();
+                window.location.href = 'index.html';
+            });
+        });
+
+        async function loadUsers() {
+            const { data: users, error } = await supabase.from('user_profiles').select('*').order('created_at', { ascending: false });
+            if (error || !users) return;
+
+            let html = `
+                <div class="table-container">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>Full Name</th>
+                                <th>Phone</th>
+                                <th>Address</th>
+                                <th>Admin</th>
+                                <th>Registered</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+            `;
+
+            users.forEach(user => {
+                html += `
+                    <tr>
+                        <td>${user.full_name || 'N/A'}</td>
+                        <td>${user.phone || 'N/A'}</td>
+                        <td>${user.address || 'N/A'}</td>
+                        <td>${user.is_admin ? '<span style="color: green;"><i class="fa fa-check"></i> Yes</span>' : '<span style="color: #999;"><i class="fa fa-times"></i> No</span>'}</td>
+                        <td>${new Date(user.created_at).toLocaleDateString()}</td>
+                        <td>
+                            <div class="admin-table-actions">
+                                <button class="btn ${user.is_admin ? 'btn-danger' : 'btn-primary'}" onclick="toggleAdmin('${user.id}', ${!user.is_admin})" style="padding: 0.5rem 1rem; font-size: 1.2rem;">
+                                    ${user.is_admin ? 'Remove Admin' : 'Make Admin'}
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                `;
+            });
+
+            html += '</tbody></table></div>';
+            document.getElementById('admin-users-table').innerHTML = html;
+        }
+
+        async function toggleAdmin(userId, isAdmin) {
+            const { error } = await supabase.from('user_profiles').update({ is_admin: isAdmin }).eq('id', userId);
+            if (error) {
+                showAlert('Error updating user', 'error');
+            } else {
+                showAlert('User role updated', 'success');
+                loadUsers();
+            }
+        }
+    </script>
+</body>
+</html>

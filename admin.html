@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard - ByteHub</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+    <link rel="stylesheet" type="text/css" href="css/style.css">
+</head>
+<body>
+    <!--Header section-->
+    <header class="header">
+        <a href="index.html" class="logo"><i class="fa fa-desktop" aria-hidden="true"></i>ByteHub</a>
+
+        <nav class="navbar">
+            <a href="index.html">Home</a>
+            <a href="products.html">Products</a>
+            <a href="about.html">About</a>
+            <a href="contact.html">Contact</a>
+        </nav>
+
+        <div class="icons">
+            <div class="fa fa-bars" id="menu-btn"></div>
+            <div class="fa fa-sign-out" id="admin-logout-btn"></div>
+        </div>
+    </header>
+
+    <!-- Admin Dashboard -->
+    <div class="dashboard-grid">
+        <div class="dashboard-sidebar">
+            <h3>Admin Panel</h3>
+            <a href="admin.html" class="active"><i class="fa fa-dashboard"></i> Dashboard</a>
+            <a href="admin-products.html"><i class="fa fa-shopping-bag"></i> Products</a>
+            <a href="admin-users.html"><i class="fa fa-users"></i> Users</a>
+            <a href="admin-orders.html"><i class="fa fa-truck"></i> Orders</a>
+            <a href="admin-faqs.html"><i class="fa fa-question-circle"></i> FAQs</a>
+        </div>
+
+        <div class="dashboard-content">
+            <h2>Admin Dashboard</h2>
+
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <h3>Total Products</h3>
+                    <p id="stat-products">0</p>
+                </div>
+                <div class="stat-card" style="background: linear-gradient(135deg, #1565C0, #1976D2);">
+                    <h3>Total Users</h3>
+                    <p id="stat-users">0</p>
+                </div>
+                <div class="stat-card" style="background: linear-gradient(135deg, #D32F2F, #F44336);">
+                    <h3>Total Orders</h3>
+                    <p id="stat-orders">0</p>
+                </div>
+                <div class="stat-card" style="background: linear-gradient(135deg, #E65100, #FF9800);">
+                    <h3>Revenue</h3>
+                    <p id="stat-revenue">Rs.0</p>
+                </div>
+            </div>
+
+            <h3 style="font-size: 2rem; margin-bottom: 2rem;">Recent Orders</h3>
+            <div id="recent-orders" class="table-container">
+                <!-- Loaded dynamically -->
+            </div>
+
+            <h3 style="font-size: 2rem; margin: 2rem 0;">Quick Actions</h3>
+            <div style="display: flex; flex-wrap: wrap; gap: 1rem;">
+                <a href="admin-products.html" class="btn btn-primary"><i class="fa fa-shopping-bag"></i> Manage Products</a>
+                <a href="admin-orders.html" class="btn btn-primary"><i class="fa fa-truck"></i> Process Orders</a>
+                <a href="admin-users.html" class="btn btn-primary"><i class="fa fa-users"></i> Manage Users</a>
+            </div>
+        </div>
+    </div>
+
+    <!--Footer Section-->
+    <section class="Footer">
+        <div class="credit">
+            <p>&copy; 2024 ByteHub Admin Panel. All Rights Reserved.</p>
+        </div>
+    </section>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="js/script.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', async () => {
+            // Check admin status
+            const { data: { session } } = await supabase.auth.getSession();
+            if (session) {
+                const { data: profile } = await supabase
+                    .from('user_profiles')
+                    .select('*')
+                    .eq('id', session.user.id)
+                    .single();
+
+                if (!profile?.is_admin) {
+                    window.location.href = 'index.html';
+                    return;
+                }
+            } else {
+                window.location.href = 'index.html';
+                return;
+            }
+
+            // Load stats
+            const { count: productCount } = await supabase.from('products').select('*', { count: 'exact', head: true });
+            const { count: userCount } = await supabase.from('user_profiles').select('*', { count: 'exact', head: true });
+            const { count: orderCount } = await supabase.from('orders').select('*', { count: 'exact', head: true });
+            const { data: orders } = await supabase.from('orders').select('total_amount');
+
+            document.getElementById('stat-products').textContent = productCount || 0;
+            document.getElementById('stat-users').textContent = userCount || 0;
+            document.getElementById('stat-orders').textContent = orderCount || 0;
+
+            const totalRevenue = orders?.reduce((sum, order) => sum + parseFloat(order.total_amount), 0) || 0;
+            document.getElementById('stat-revenue').textContent = `Rs.${totalRevenue.toLocaleString()}`;
+
+            // Load recent orders
+            const { data: recentOrders } = await supabase
+                .from('orders')
+                .select('*, user_profiles(full_name)')
+                .order('created_at', { ascending: false })
+                .limit(5);
+
+            if (recentOrders && recentOrders.length > 0) {
+                let html = `
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>Order ID</th>
+                                <th>Customer</th>
+                                <th>Total</th>
+                                <th>Status</th>
+                                <th>Date</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                `;
+
+                recentOrders.forEach(order => {
+                    html += `
+                        <tr>
+                            <td>${order.id.substring(0, 8).toUpperCase()}</td>
+                            <td>${order.user_profiles?.full_name || 'N/A'}</td>
+                            <td>Rs.${parseFloat(order.total_amount).toLocaleString()}</td>
+                            <td><span class="status-badge status-${order.status}">${order.status}</span></td>
+                            <td>${new Date(order.created_at).toLocaleDateString()}</td>
+                        </tr>
+                    `;
+                });
+
+                html += '</tbody></table>';
+                document.getElementById('recent-orders').innerHTML = html;
+            } else {
+                document.getElementById('recent-orders').innerHTML = '<p>No orders yet.</p>';
+            }
+
+            // Admin logout
+            document.getElementById('admin-logout-btn').addEventListener('click', async () => {
+                await supabase.auth.signOut();
+                window.location.href = 'index.html';
+            });
+        });
+    </script>
+</body>
+</html>

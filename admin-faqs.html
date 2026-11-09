@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Manage FAQs - ByteHub Admin</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+    <link rel="stylesheet" type="text/css" href="css/style.css">
+</head>
+<body>
+    <!--Header section-->
+    <header class="header">
+        <a href="index.html" class="logo"><i class="fa fa-desktop" aria-hidden="true"></i>ByteHub Admin</a>
+
+        <nav class="navbar">
+            <a href="index.html">View Site</a>
+            <a href="admin.html">Dashboard</a>
+        </nav>
+
+        <div class="icons">
+            <div class="fa fa-bars" id="menu-btn"></div>
+            <div class="fa fa-sign-out" id="admin-logout-btn"></div>
+        </div>
+    </header>
+
+    <!-- Admin Dashboard -->
+    <div class="dashboard-grid">
+        <div class="dashboard-sidebar">
+            <h3>Admin Panel</h3>
+            <a href="admin.html"><i class="fa fa-dashboard"></i> Dashboard</a>
+            <a href="admin-products.html"><i class="fa fa-shopping-bag"></i> Products</a>
+            <a href="admin-users.html"><i class="fa fa-users"></i> Users</a>
+            <a href="admin-orders.html"><i class="fa fa-truck"></i> Orders</a>
+            <a href="admin-faqs.html" class="active"><i class="fa fa-question-circle"></i> FAQs</a>
+        </div>
+
+        <div class="dashboard-content">
+            <h2>FAQ Management</h2>
+            <div id="admin-faqs-container">
+                <div class="loading">
+                    <div class="spinner"></div>
+                    <p>Loading FAQs...</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <section class="Footer">
+        <div class="credit"><p>&copy; 2024 ByteHub Admin. All Rights Reserved.</p></div>
+    </section>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="js/script.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', async () => {
+            const { data: { session } } = await supabase.auth.getSession();
+            if (session) {
+                const { data: profile } = await supabase.from('user_profiles').select('*').eq('id', session.user.id).single();
+                if (!profile?.is_admin) {
+                    window.location.href = 'index.html';
+                    return;
+                }
+                loadFAQs();
+            } else {
+                window.location.href = 'index.html';
+            }
+
+            document.getElementById('admin-logout-btn').addEventListener('click', async () => {
+                await supabase.auth.signOut();
+                window.location.href = 'index.html';
+            });
+        });
+
+        async function loadFAQs() {
+            const { data: faqs, error } = await supabase.from('faqs').select('*').order('sort_order');
+            if (error || !faqs) return;
+
+            let html = `
+                <button class="btn btn-primary" onclick="showAddFAQModal()" style="margin-bottom: 2rem;">
+                    <i class="fa fa-plus"></i> Add New FAQ
+                </button>
+            `;
+
+            if (faqs.length === 0) {
+                html += '<p>No FAQs added yet. Click the button above to add one.</p>';
+            } else {
+                faqs.forEach((faq, index) => {
+                    html += `
+                        <div style="background: #f9f9f9; padding: 1.5rem; border-radius: .5rem; margin-bottom: 1rem; border-left: 4px solid var(--green);">
+                            <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 1rem;">
+                                <h4 style="font-size: 1.8rem; color: var(--black); flex: 1;">${faq.question}</h4>
+                                <span style="font-size: 1.3rem; color: var(--light-color);">#${faq.sort_order || index + 1}</span>
+                            </div>
+                            <p style="font-size: 1.5rem; color: var(--light-color); margin-bottom: 1rem; line-height: 1.6;">${faq.answer}</p>
+                            <div class="admin-table-actions">
+                                <button class="btn btn-primary" onclick="editFAQAdmin('${faq.id}')" style="padding: 0.5rem 1.5rem; font-size: 1.3rem;"><i class="fa fa-edit"></i> Edit</button>
+                                <button class="btn btn-danger" onclick="deleteFAQAdmin('${faq.id}')" style="padding: 0.5rem 1.5rem; font-size: 1.3rem;"><i class="fa fa-trash"></i> Delete</button>
+                            </div>
+                        </div>
+                    `;
+                });
+            }
+
+            document.getElementById('admin-faqs-container').innerHTML = html;
+        }
+
+        function showAddFAQModal() {
+            const modal = document.createElement('div');
+            modal.className = 'modal-overlay active';
+            modal.innerHTML = `
+                <div class="modal">
+                    <span class="modal-close" onclick="this.closest('.modal-overlay').remove()">&times;</span>
+                    <h2>Add New FAQ</h2>
+                    <form id="faq-form">
+                        <div class="form-group">
+                            <label>Question</label>
+                            <input type="text" id="faq-question" required placeholder="Type the question">
+                        </div>
+                        <div class="form-group">
+                            <label>Answer</label>
+                            <textarea id="faq-answer" rows="4" required placeholder="Type the answer"></textarea>
+                        </div>
+                        <div class="form-group">
+                            <label>Sort Order</label>
+                            <input type="number" id="faq-order" value="1" min="1">
+                        </div>
+                        <button type="submit" class="btn btn-primary">Add FAQ</button>
+                    </form>
+                </div>
+            `;
+            document.body.appendChild(modal);
+
+            document.getElementById('faq-form').onsubmit = async (e) => {
+                e.preventDefault();
+                const { error } = await supabase.from('faqs').insert([{
+                    question: document.getElementById('faq-question').value,
+                    answer: document.getElementById('faq-answer').value,
+                    sort_order: document.getElementById('faq-order').value
+                }]);
+
+                if (error) {
+                    showAlert('Error adding FAQ', 'error');
+                } else {
+                    showAlert('FAQ added successfully', 'success');
+                    modal.remove();
+                    loadFAQs();
+                }
+            };
+        }
+
+        async function editFAQAdmin(faqId) {
+            const { data: faq } = await supabase.from('faqs').select('*').eq('id', faqId).single();
+            if (!faq) return;
+
+            const modal = document.createElement('div');
+            modal.className = 'modal-overlay active';
+            modal.innerHTML = `
+                <div class="modal">
+                    <span class="modal-close" onclick="this.closest('.modal-overlay').remove()">&times;</span>
+                    <h2>Edit FAQ</h2>
+                    <form id="faq-edit-form">
+                        <div class="form-group">
+                            <label>Question</label>
+                            <input type="text" id="faq-question" value="${faq.question}" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Answer</label>
+                            <textarea id="faq-answer" rows="4" required>${faq.answer}</textarea>
+                        </div>
+                        <div class="form-group">
+                            <label>Sort Order</label>
+                            <input type="number" id="faq-order" value="${faq.sort_order || 1}" min="1">
+                        </div>
+                        <button type="submit" class="btn btn-primary">Update FAQ</button>
+                    </form>
+                </div>
+            `;
+            document.body.appendChild(modal);
+
+            document.getElementById('faq-edit-form').onsubmit = async (e) => {
+                e.preventDefault();
+                const { error } = await supabase.from('faqs').update({
+                    question: document.getElementById('faq-question').value,
+                    answer: document.getElementById('faq-answer').value,
+                    sort_order: document.getElementById('faq-order').value
+                }).eq('id', faqId);
+
+                if (error) {
+                    showAlert('Error updating FAQ', 'error');
+                } else {
+                    showAlert('FAQ updated successfully', 'success');
+                    modal.remove();
+                    loadFAQs();
+                }
+            };
+        }
+
+        async function deleteFAQAdmin(faqId) {
+            if (!confirm('Are you sure you want to delete this FAQ?')) return;
+
+            const { error } = await supabase.from('faqs').delete().eq('id', faqId);
+            if (error) {
+                showAlert('Error deleting FAQ', 'error');
+            } else {
+                showAlert('FAQ deleted', 'success');
+                loadFAQs();
+            }
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Account - ByteHub</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+    <link rel="stylesheet" type="text/css" href="css/style.css">
+</head>
+<body>
+    <!--Header section-->
+    <header class="header">
+        <a href="index.html" class="logo"><i class="fa fa-desktop" aria-hidden="true"></i>ByteHub</a>
+
+        <nav class="navbar">
+            <a href="index.html">Home</a>
+            <a href="products.html">Products</a>
+            <a href="about.html">About</a>
+            <a href="contact.html">Contact</a>
+        </nav>
+
+        <div class="icons">
+            <div class="fa fa-bars" id="menu-btn"></div>
+            <div class="fa fa-shopping-cart" id="cart-btn"></div>
+            <div class="fa fa-user" id="login-btn"></div>
+        </div>
+
+        <div class="shopping-cart" id="cart-dropdown">
+            <div id="cart-items"></div>
+            <div class="total" id="cart-total">Total: Rs.0/-</div>
+            <a href="cart.html" class="btn">View Cart</a>
+        </div>
+
+        <div class="login-dropdown" id="login-dropdown">
+            <div id="auth-guest">
+                <h3>Login Now</h3>
+                <form id="login-form">
+                    <input type="email" id="login-email" placeholder="Enter your email" class="box" required>
+                    <input type="password" id="login-password" placeholder="Enter your password" class="box" required>
+                    <input type="submit" value="Login Now" class="btn">
+                </form>
+            </div>
+            <div id="auth-user" style="display: none;">
+                <h3>Welcome, <span id="user-name">User</span></h3>
+                <a href="dashboard.html" class="btn">My Account</a>
+                <button id="logout-btn" class="btn">Logout</button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Dashboard -->
+    <div class="dashboard-grid">
+        <div class="dashboard-sidebar">
+            <h3>My Account</h3>
+            <a href="dashboard.html" class="active"><i class="fa fa-user"></i> Profile</a>
+            <a href="orders.html"><i class="fa fa-shopping-bag"></i> My Orders</a>
+            <a href="cart.html"><i class="fa fa-shopping-cart"></i> Shopping Cart</a>
+            <a href="#" id="logout-sidebar"><i class="fa fa-sign-out"></i> Logout</a>
+        </div>
+
+        <div class="dashboard-content">
+            <h2>My Profile</h2>
+
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(25rem, 1fr)); gap: 2rem; margin-bottom: 3rem;">
+                <div class="stat-card">
+                    <h3>Total Orders</h3>
+                    <p id="total-orders">0</p>
+                </div>
+                <div class="stat-card" style="background: linear-gradient(135deg, #1565C0, #1976D2);">
+                    <h3>Total Spent</h3>
+                    <p id="total-spent">Rs.0</p>
+                </div>
+            </div>
+
+            <form id="profile-form">
+                <div class="form-group">
+                    <label for="user-full-name">Full Name</label>
+                    <input type="text" id="user-full-name" placeholder="Enter your name">
+                </div>
+                <div class="form-group">
+                    <label for="user-email">Email Address</label>
+                    <input type="email" id="user-email" disabled>
+                </div>
+                <div class="form-group">
+                    <label for="user-phone">Phone Number</label>
+                    <input type="tel" id="user-phone" placeholder="Enter your phone number">
+                </div>
+                <div class="form-group">
+                    <label for="user-address">Address</label>
+                    <textarea id="user-address" rows="3" placeholder="Enter your address"></textarea>
+                </div>
+                <button type="submit" class="btn btn-primary" style="width: 100%;">Update Profile</button>
+            </form>
+        </div>
+    </div>
+
+    <!--Footer Section-->
+    <section class="Footer">
+        <div class="box-container">
+            <div class="box">
+                <h3>ByteHub</h3>
+                <p>Your one-stop destination for high-performance computers, laptops, and accessories.</p>
+            </div>
+            <div class="box">
+                <h3>Quick Links</h3>
+                <a href="index.html"><i class="fa fa-arrow-right"></i> Home</a>
+                <a href="products.html"><i class="fa fa-arrow-right"></i> Products</a>
+                <a href="about.html"><i class="fa fa-arrow-right"></i> About Us</a>
+                <a href="contact.html"><i class="fa fa-arrow-right"></i> Contact</a>
+            </div>
+            <div class="box">
+                <h3>Customer Service</h3>
+                <a href="faq.html"><i class="fa fa-arrow-right"></i> FAQ</a>
+                <a href="privacy.html"><i class="fa fa-arrow-right"></i> Privacy Policy</a>
+            </div>
+            <div class="box">
+                <h3>Contact Info</h3>
+                <a href="#"><i class="fa fa-phone"></i> +94 11 234 5678</a>
+                <a href="#"><i class="fa fa-envelope"></i> info@bytehub.lk</a>
+            </div>
+        </div>
+        <div class="credit">
+            <p>&copy; 2024 ByteHub. All Rights Reserved.</p>
+        </div>
+    </section>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="js/script.js"></script>
+    <script>
+        // Additional dashboard functionality
+        document.addEventListener('DOMContentLoaded', async() => {
+            // Load order stats
+            const { data: { session } } = await supabase.auth.getSession();
+            if (session) {
+                const { data: orders } = await supabase
+                    .from('orders')
+                    .select('*')
+                    .eq('user_id', session.user.id);
+
+                if (orders) {
+                    document.getElementById('total-orders').textContent = orders.length;
+                    const totalSpent = orders.reduce((sum, order) => sum + parseFloat(order.total_amount), 0);
+                    document.getElementById('total-spent').textContent = `Rs.${totalSpent.toLocaleString()}`;
+                }
+            }
+
+            // Logout sidebar button
+            document.getElementById('logout-sidebar')?.addEventListener('click', handleLogout);
+        });
+    </script>
+</body>
+</html>
