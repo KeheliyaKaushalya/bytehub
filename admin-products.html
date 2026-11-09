@@ -73,7 +73,10 @@
 
         async function loadAdminProducts() {
             const { data, error } = await supabase.from('products').select('*, categories(name)');
-            if (error) return;
+            if (error) {
+            showAlert('Could not load products: ' + error.message, 'error');
+            return;
+            }
 
             let html = `
                 <button class="btn btn-primary" onclick="showProductModal()" style="margin-bottom: 2rem;">
@@ -98,8 +101,8 @@
             data.forEach(product => {
                 html += `
                     <tr>
-                        <td><img src="${product.image_url || 'https://placehold.co/60x60'}" style="width: 60px; height: 60px; object-fit: cover; border-radius: 5px;"></td>
-                        <td>${product.name}</td>
+                        <td><img src="${escapeHtml(product.image_url || 'https://placehold.co/60x60')}" alt="" style="width: 60px; height: 60px; object-fit: cover; border-radius: 5px;"></td>
+                        <td>${escapeHtml(product.name)}</td>
                         <td>${product.categories?.name || 'N/A'}</td>
                         <td>Rs.${parseFloat(product.price).toLocaleString()}</td>
                         <td>${product.stock_quantity}</td>
@@ -118,67 +121,9 @@
             document.getElementById('admin-products-table').innerHTML = html;
         }
 
-        async function editProductAdmin(productId) {
-            const { data: product } = await supabase.from('products').select('*').eq('id', productId).single();
-            if (!product) return;
-
-            const modal = document.createElement('div');
-            modal.className = 'modal-overlay active';
-            modal.innerHTML = `
-                <div class="modal">
-                    <span class="modal-close" onclick="this.closest('.modal-overlay').remove()">&times;</span>
-                    <h2>Edit Product</h2>
-                    <form id="product-edit-form">
-                        <div class="form-group">
-                            <label>Product Name</label>
-                            <input type="text" id="prod-name" value="${product.name}" required>
-                        </div>
-                        <div class="form-group">
-                            <label>Description</label>
-                            <textarea id="prod-desc" rows="3">${product.description || ''}</textarea>
-                        </div>
-                        <div class="form-group">
-                            <label>Price (Rs.)</label>
-                            <input type="number" id="prod-price" value="${product.price}" required step="0.01">
-                        </div>
-                        <div class="form-group">
-                            <label>Image URL</label>
-                            <input type="text" id="prod-image" value="${product.image_url || ''}">
-                        </div>
-                        <div class="form-group">
-                            <label>Stock Quantity</label>
-                            <input type="number" id="prod-stock" value="${product.stock_quantity}" required>
-                        </div>
-                        <div class="form-group">
-                            <label>
-                                <input type="checkbox" id="prod-featured" ${product.featured ? 'checked' : ''}> Featured Product
-                            </label>
-                        </div>
-                        <button type="submit" class="btn btn-primary">Update Product</button>
-                    </form>
-                </div>
-            `;
-            document.body.appendChild(modal);
-
-            document.getElementById('product-edit-form').onsubmit = async (e) => {
-                e.preventDefault();
-                const { error } = await supabase.from('products').update({
-                    name: document.getElementById('prod-name').value,
-                    description: document.getElementById('prod-desc').value,
-                    price: document.getElementById('prod-price').value,
-                    image_url: document.getElementById('prod-image').value,
-                    stock_quantity: document.getElementById('prod-stock').value,
-                    featured: document.getElementById('prod-featured').checked
-                }).eq('id', productId);
-
-                if (error) {
-                    showAlert('Error updating product', 'error');
-                } else {
-                    showAlert('Product updated successfully', 'success');
-                    modal.remove();
-                    loadAdminProducts();
-                }
-            };
+        function editProductAdmin(productId) {
+        // Uses the shared modal from js/script.js (validation, error messages, category + featured)
+        showProductModal(productId);
         }
     </script>
 </body>
